@@ -5,6 +5,7 @@ const Entities = require('html-entities');
 const ejs = require('ejs');
 const Haikunator = require('haikunator');
 const { SourceControl, Jira } = require('jira-changelog');
+const RegExpFromString = require('regexp-from-string');
 
 const config = {
   jira: {
@@ -14,7 +15,7 @@ const config = {
       token: core.getInput('jira_token'),
     },
     baseUrl: core.getInput('jira_base_url'),
-    ticketIDPattern: core.getInput('jira_ticket_id_pattern'),
+    ticketIDPattern: RegExpFromString(core.getInput('jira_ticket_id_pattern')),
     approvalStatus: ['Done', 'Closed', 'Accepted'],
     excludeIssueTypes: ['Sub-task'],
     includeIssueTypes: [],
@@ -26,6 +27,8 @@ const config = {
     }
   },
 };
+
+
 
 const template = `
 <% if (jira.releaseVersions && jira.releaseVersions.length) {  %>
@@ -59,7 +62,6 @@ Pending Approval
 <% }); -%>
 <% }); -%>
 <% if (!tickets.pendingByOwner.length) {%> ~ None. Yay! ~ <% } %>
-
 `;
 
 function generateReleaseVersionName() {
