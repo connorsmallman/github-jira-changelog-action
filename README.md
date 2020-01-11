@@ -20,6 +20,11 @@ Generates a changelog message by looking at Jira issue keys, surrounded by squar
 
 Jira base web URL for changelog message entries
 
+### `jira_ticket_id_pattern`
+
+Regex used to match the issue ticket key
+*Note: Use capture group one to isolate the key text within surrounding characters (if needed).*
+
 ### `source_control_range_from`
 
 Starting branch to get range of commits

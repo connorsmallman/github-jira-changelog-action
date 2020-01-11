@@ -17,6 +17,10 @@ inputs:
         description: 'Jira base web URL for changelog message entries'
         default: 'https://atlassian.net'
         required: false
+    jira_ticket_id_pattern:
+        description: 'Regex used to match the issue ticket key'
+        default: /\[([A-Z]+\-[0-9]+)\]/i
+        required: false
     source_control_range_from:
         description: 'Starting branch to get range of commits'
         default: 'develop'
