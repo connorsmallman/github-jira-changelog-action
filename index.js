@@ -133,7 +133,7 @@ async function main() {
 
     const range = config.sourceControl.defaultRange;
     console.log(`Getting range ${range.from}...${range.to} commit logs`);
-    const commitLogs = await source.getCommitLogs('./');
+    const commitLogs = await source.getCommitLogs('./', range);
     console.log('Found following commit logs:');
     console.log(commitLogs);
 
