@@ -41,7 +41,7 @@ Release version: <%= jira.releaseVersions[0].name -%>
 Jira Tickets
 ---------------------
 <% tickets.all.forEach((ticket) => { %>
-  * [<%= ticket.fields.issuetype.name %>] - [<%= ticket.key %>](<%= jira.baseUrl + '/browse/' + ticket.key %>) <% ticket.fields.summary %>
+  * [<%= ticket.fields.issuetype.name %>] - [<%= ticket.key %>](<%= jira.baseUrl + '/browse/' + ticket.key %>) <%= ticket.fields.summary -%>
 <% }); -%>
 <% if (!tickets.all.length) {%> ~ None ~ <% } %>
 
