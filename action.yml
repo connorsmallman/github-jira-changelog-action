@@ -29,6 +29,18 @@ inputs:
         description: 'Ending branch to get range of commits'
         default: 'master'
         required: false
+    approval_statuses:
+        description: 'Comma separated list of issue statuses treated as approved'
+        default: 'Done,Closed,Accepted'
+        required: false
+    exclude_issue_types:
+        description: 'Comma separated list of issue types to exclude from changelog'
+        default: 'Sub-task'
+        required: false
+    include_pending_approval_section:
+        description: 'Boolean flag indicating whether to include or exclude `Pending Approval` section'
+        default: 'true'
+        required: false
 outputs:
     changelog_message:
         description: 'Generated changelog entry'

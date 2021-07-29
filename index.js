@@ -1,5 +1,4 @@
 const core = require('@actions/core');
-const github = require('@actions/github');
 const _ = require('lodash');
 const Entities = require('html-entities');
 const ejs = require('ejs');
@@ -16,8 +15,8 @@ const config = {
     },
     baseUrl: core.getInput('jira_base_url'),
     ticketIDPattern: RegExpFromString(core.getInput('jira_ticket_id_pattern')),
-    approvalStatus: ['Done', 'Closed', 'Accepted'],
-    excludeIssueTypes: ['Sub-task'],
+    approvalStatus: core.getInput('approval_statuses').split(",").filter(x => x !== ""),
+    excludeIssueTypes: core.getInput('exclude_issue_types').split(",").filter(x => x !== ""),
     includeIssueTypes: [],
   },
   sourceControl: {
@@ -33,8 +32,8 @@ const config = {
 const template = `
 <% if (jira.releaseVersions && jira.releaseVersions.length) {  %>
 Release version: <%= jira.releaseVersions[0].name -%>
-<% jira.releaseVersions.forEach((release) => { %>
-  * <%= release.projectKey %>: <%= jira.baseUrl + '/projects/' + release.projectKey + '/versions/' + release.id -%>
+<% jira.releaseVersions.sort((a, b) => a.projectKey.localeCompare(b.projectKey)).forEach((release) => { %>
+  * [<%= release.projectKey %>](<%= jira.baseUrl + '/projects/' + release.projectKey + '/versions/' + release.id %>) <% -%>
 <% }); -%>
 <% } %>
 
@@ -52,6 +51,7 @@ Other Commits
 <% }); -%>
 <% if (!commits.noTickets.length) {%> ~ None ~ <% } %>
 
+<% if (includePendingApprovalSection) { %>
 Pending Approval
 ---------------------
 <% tickets.pendingByOwner.forEach((owner) => { %>
@@ -61,6 +61,7 @@ Pending Approval
 <% }); -%>
 <% }); -%>
 <% if (!tickets.pendingByOwner.length) {%> ~ None. Yay! ~ <% } %>
+<% } %>
 `;
 
 function generateReleaseVersionName() {
@@ -152,6 +153,7 @@ async function main() {
       baseUrl: config.jira.baseUrl,
       releaseVersions: jira.releaseVersions,
     };
+    data.includePendingApprovalSection = core.getInput('include_pending_approval_section') === 'true';
 
     const entitles = new Entities.AllHtmlEntities();
     const changelogMessage = ejs.render(template, data);
