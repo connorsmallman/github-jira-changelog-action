@@ -33,6 +33,20 @@ Starting branch to get range of commits
 
 Ending branch to get range of commits
 
+### `approval_statuses`
+
+Comma separated list of issue statuses treated as approved
+
+
+### `exclude_issue_types`
+
+Comma separated list of issue types to exclude from changelog
+
+
+### `include_pending_approval_section`
+
+Boolean flag indicating whether to include or exclude `Pending Approval` section
+
 ## Outputs
 
 ### `changelog_message`
