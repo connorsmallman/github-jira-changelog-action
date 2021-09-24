@@ -24,7 +24,7 @@
     "haikunator": "^2.1.2",
     "html-entities": "^1.2.1",
     "jira-changelog": "^1.5.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "regexp-from-string": "^0.1.0"
   }
 }
