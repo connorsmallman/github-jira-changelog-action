@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/connorsmallman/github-jira-changelog-action#readme",
   "dependencies": {
-    "@actions/core": "^1.1.0",
+    "@actions/core": "^1.9.1",
     "@actions/github": "^1.1.0",
     "ejs": "^3.0.1",
     "haikunator": "^2.1.2",
