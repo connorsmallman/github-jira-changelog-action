@@ -163,8 +163,6 @@ async function main() {
     
     process.env['changelog_message'] = changelogMessage;
     //core.setOutput('changelog_message', changelogMessage);
-    //core.exportVariable('changelog_message', changelogMessage);
-    //const myOutputValue = process.env.myOutput;
 
 
   } catch (error) {
