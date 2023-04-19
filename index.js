@@ -161,7 +161,10 @@ async function main() {
     console.log('Changelog message entry:');
     console.log(entitles.decode(changelogMessage));
 
-    core.setOutput('changelog_message', changelogMessage);
+    //core.setOutput('changelog_message', changelogMessage);
+    core.exportVariable('changelog_message', changelogMessage);
+    //const myOutputValue = process.env.myOutput;
+
 
   } catch (error) {
     core.setFailed(error.message);
