@@ -160,8 +160,10 @@ async function main() {
 
     console.log('Changelog message entry:');
     console.log(entitles.decode(changelogMessage));
+    
+    process.env['changelog_message'] = changelogMessage;
+    //core.setOutput('changelog_message', changelogMessage);
 
-    core.setOutput('changelog_message', changelogMessage);
 
   } catch (error) {
     core.setFailed(error.message);

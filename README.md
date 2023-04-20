@@ -87,10 +87,10 @@ jobs:
     name: Changelog
     steps:
       - name: Set Version
-        run: echo ::set-env name=VERSION::1.1.1
+        run: echo "VERSION=1.1.1" >> $GITHUB_ENV
       # To use this repository's private action, you must check out the repository
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v3
       - name: Changelog
         id: changelog
         uses: actions/jira-changelog@v1
