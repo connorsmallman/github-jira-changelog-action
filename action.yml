@@ -45,5 +45,5 @@ outputs:
     changelog_message:
         description: 'Generated changelog entry'
 runs:
-    using: 'node16'
+    using: 'node12'
     main: 'index.js'
