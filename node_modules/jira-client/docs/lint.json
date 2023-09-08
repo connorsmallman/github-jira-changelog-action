@@ -1,1 +1,88 @@
-[]
+[
+  {
+    "name": "JiraApi#getBoardIssuesForSprint",
+    "filePath": "src/jira.js",
+    "lines": [
+      {
+        "lineNumber": 1920,
+        "line": "  /** Get Board issues for sprint"
+      },
+      {
+        "lineNumber": 1921,
+        "line": "   * [Jira Doc](https://docs.atlassian.com/jira-software/REST/cloud/#agile/1.0/board/{boardId}/sprint-getIssuesForSprint)"
+      },
+      {
+        "lineNumber": 1922,
+        "line": "   * @name getBoardIssuesForSprint"
+      },
+      {
+        "lineNumber": 1923,
+        "line": "   * @function"
+      },
+      {
+        "lineNumber": 1924,
+        "line": "   * @param {string} boardId - Id of board to retrieve"
+      },
+      {
+        "lineNumber": 1925,
+        "line": "   * @param {string} sprintId - Id of sprint to retrieve"
+      },
+      {
+        "lineNumber": 1926,
+        "line": "   * @param {number} [startAt=0] - The starting index of the returned issues. Base index: 0."
+      },
+      {
+        "lineNumber": 1927,
+        "line": "   * @param {number} [maxResults=50] - The maximum number of issues to return per page. Default: 50."
+      },
+      {
+        "lineNumber": 1928,
+        "line": "   * @param {string} [jql] - Filters results using a JQL query."
+      },
+      {
+        "lineNumber": 1929,
+        "line": "   * @param {boolean} [validateQuery] - Specifies whether to validate the JQL query or not."
+      },
+      {
+        "lineNumber": 1930,
+        "line": "   * Default: true."
+      },
+      {
+        "lineNumber": 1931,
+        "line": "   * @param {string} [fields] - The list of fields to return for each issue."
+      },
+      {
+        "lineNumber": 1932,
+        "line": "   * @param {string} [fields] - The list of fields to return for each issue."
+      },
+      {
+        "lineNumber": 1933,
+        "line": "   */"
+      },
+      {
+        "lineNumber": 1934,
+        "line": "  getBoardIssuesForSprint(boardId, sprintId, startAt = 0, maxResults = 50, jql,"
+      }
+    ],
+    "codeParams": [
+      "boardId",
+      "sprintId",
+      "startAt",
+      "maxResults",
+      "jql",
+      "validateQuery",
+      "fields",
+      "expand"
+    ],
+    "docParams": [
+      "boardId",
+      "sprintId",
+      "startAt",
+      "maxResults",
+      "jql",
+      "validateQuery",
+      "fields",
+      "fields"
+    ]
+  }
+]
