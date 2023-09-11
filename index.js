@@ -1,4 +1,5 @@
 const core = require('@actions/core');
+const github = require('@actions/github')
 const _ = require('lodash');
 const Entities = require('html-entities');
 const ejs = require('ejs');
@@ -21,7 +22,7 @@ const config = {
   },
   sourceControl: {
     defaultRange: {
-      from:  core.getInput('source_control_range_from'),
+      from: core.getInput('source_control_range_from'),
       to: core.getInput('source_control_range_to')
     }
   },
@@ -30,38 +31,28 @@ const config = {
 
 
 const template = `
-<% if (jira.releaseVersions && jira.releaseVersions.length) {  %>
-Release version: <%= jira.releaseVersions[0].name -%>
-<% jira.releaseVersions.sort((a, b) => a.projectKey.localeCompare(b.projectKey)).forEach((release) => { %>
-  * [<%= release.projectKey %>](<%= jira.baseUrl + '/projects/' + release.projectKey + '/versions/' + release.id %>) <% -%>
-<% }); -%>
-<% } %>
+Release version: <%= releaseVersionName -%>
 
 Jira Tickets
 ---------------------
-<% tickets.all.forEach((ticket) => { %>
-  * [<%= ticket.fields.issuetype.name %>] - [<%= ticket.key %>](<%= jira.baseUrl + '/browse/' + ticket.key %>) <%= ticket.fields.summary -%>
+<% tickets.forEach((ticket) => { %>
+  * [<%= ticket.fields.issuetype.name %>] - [<%= ticket.key %>](<%= baseUrl + '/browse/' + ticket.key %>) <%= ticket.fields.summary -%>
 <% }); -%>
-<% if (!tickets.all.length) {%> ~ None ~ <% } %>
+<% if (!tickets.size) {%> ~ None ~ <% } %>
+
+Unkown Tickets (not found in Jira)
+---------------------
+<% unknownTickets.forEach((ticket) => { %>
+  * <%= ticket.summary -%>
+<% }); -%>
+<% if (!unknownTickets.size) {%> ~ None ~ <% } %>
 
 Other Commits
 ---------------------
-<% commits.noTickets.forEach((commit) => { %>
+<% commits.forEach((commit) => { %>
   * <%= commit.slackUser ? '@'+commit.slackUser.name : commit.authorName %> - [<%= commit.revision.substr(0, 7) %>] - <%= commit.summary -%>
 <% }); -%>
-<% if (!commits.noTickets.length) {%> ~ None ~ <% } %>
-
-<% if (includePendingApprovalSection) { %>
-Pending Approval
----------------------
-<% tickets.pendingByOwner.forEach((owner) => { %>
-<%= (owner.slackUser) ? '@'+owner.slackUser.name : owner.email %>
-<% owner.tickets.forEach((ticket) => { -%>
-  * <%= jira.baseUrl + '/browse/' + ticket.key %>
-<% }); -%>
-<% }); -%>
-<% if (!tickets.pendingByOwner.length) {%> ~ None. Yay! ~ <% } %>
-<% } %>
+<% if (!commits.length) {%> ~ None ~ <% } %>
 `;
 
 function generateReleaseVersionName() {
@@ -74,84 +65,71 @@ function generateReleaseVersionName() {
   }
 }
 
-function transformCommitLogs(config, logs) {
-  let approvalStatus = config.jira.approvalStatus;
-  if (!Array.isArray(approvalStatus)) {
-    approvalStatus = [approvalStatus];
-  }
+async function getIssues() {
+  // Get commits for a range
+  const source = new SourceControl(config);
+  const jira = new Jira(config);
 
-  // Tickets and their commits
-  const ticketHash = logs.reduce((all, log) => {
-    log.tickets.forEach((ticket) => {
-      all[ticket.key] = all[ticket.key] || ticket;
-      all[ticket.key].commits = all[ticket.key].commits || [];
-      all[ticket.key].commits.push(log);
-    });
-    return all;
-  }, {});
-  const ticketList = _.sortBy(Object.values(ticketHash), ticket => ticket.fields.issuetype.name);
-  let pendingTickets = ticketList.filter(ticket => !approvalStatus.includes(ticket.fields.status.name));
+  const range = config.sourceControl.defaultRange;
+  console.log(`Getting range ${range.from}...${range.to} commit logs`);
+  const commitLogs = await source.getCommitLogs('./', range);
 
-  // Pending ticket owners and their tickets/commits
-  const reporters = {};
-  pendingTickets.forEach((ticket) => {
-    const email = ticket.fields.reporter.emailAddress;
-    if (!reporters[email]) {
-      reporters[email] = {
-        email,
-        name: ticket.fields.reporter.displayName,
-        slackUser: ticket.slackUser,
-        tickets: [ticket]
-      };
+  const issues = new Map();
+  const unknownIssues = new Map();
+  const commits = [];
+
+  for (const commit of commitLogs) {
+    const match = config.jira.ticketIDPattern.exec(commit.summary);
+    if (match) {
+      const ticketId = match[1];
+
+      if (issues.has(ticketId)) {
+        continue;
+      }
+
+      console.log(`Fetching Jira issue ${ticketId}`);
+      try {
+        const issue = await jira.getJiraIssue(ticketId);
+        if (issue) {
+          issues.set(ticketId, issue);
+        }
+      } catch (error) {
+        console.error(`Error while fetching Jira issue ${ticketId}: ${error.message}`);
+        unknownIssues.set(ticketId, commit);
+      }
     } else {
-      reporters[email].tickets.push(ticket);
-    }
-  });
-  const pendingByOwner = _.sortBy(Object.values(reporters), item => item.user);
-
-  // Output filtered data
-  return {
-    commits: {
-      all: logs,
-      tickets: logs.filter(commit => commit.tickets.length),
-      noTickets: logs.filter(commit => !commit.tickets.length)
-    },
-    tickets: {
-      pendingByOwner,
-      all: ticketList,
-      approved: ticketList.filter(ticket => approvalStatus.includes(ticket.fields.status.name)),
-      pending: pendingTickets
+      commits.push(commit);
     }
   }
+
+  return {
+    tickets: issues,
+    unknownTickets: unknownIssues,
+    commits: commits,
+  };
 }
+
 
 async function main() {
   try {
-    // Get commits for a range
-    const source = new SourceControl(config);
-    const jira = new Jira(config);
+    const issues = await getIssues();
+    const releaseVersionName = generateReleaseVersionName();
 
-    const range = config.sourceControl.defaultRange;
-    console.log(`Getting range ${range.from}...${range.to} commit logs`);
-    const commitLogs = await source.getCommitLogs('./', range);
-    console.log('Found following commit logs:');
-    console.log(commitLogs);
+    console.log(`Release version name: ${releaseVersionName}`);
+    console.log(`Jira tickets: ${issues.tickets.size}`);
+    console.log(`Unknown tickets: ${issues.unknownTickets.size}`);
 
-    console.log('Generating release version');
-    const release = generateReleaseVersionName();
-    console.log(`Release: ${release}`);
 
-    console.log('Generating Jira changelog from commit logs');
-    const changelog = await jira.generate(commitLogs, release);
-    console.log('Changelog entry:');
-    console.log(changelog);
+    console.debug("Issues: ", issues.tickets);
+    console.debug("Unknown Issues: ", issues.unknownTickets);
 
-    console.log('Generating changelog message');
-    const data = await transformCommitLogs(config, changelog);
-
-    data.jira = {
+    data = {
+      releaseVersionName: releaseVersionName,
       baseUrl: config.jira.baseUrl,
-      releaseVersions: jira.releaseVersions,
+      tickets: issues.tickets,
+      unknownTickets: issues.unknownTickets,
+      // commits without tickets
+      commits: issues.commits,
     };
     data.includePendingApprovalSection = core.getInput('include_pending_approval_section') === 'true';
 
@@ -162,8 +140,8 @@ async function main() {
     console.log(entitles.decode(changelogMessage));
 
     core.setOutput('changelog_message', changelogMessage);
-
   } catch (error) {
+    console.error(error);
     core.setFailed(error.message);
   }
 }
